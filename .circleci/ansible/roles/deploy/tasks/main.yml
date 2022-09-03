@@ -11,7 +11,7 @@
 
 - name: "Unarchive backend files"
   unarchive:
-    src: /home/ubuntu/artifact.tar.gz
+    src: /home/ubuntu/backend/artifact.tar.gz
     dest: ~/backend-app
 
 - name: "Executing Node app with PM2"
