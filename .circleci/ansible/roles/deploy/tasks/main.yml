@@ -4,14 +4,10 @@
     path: ~/backend-app
     state: directory
 
-- name: "Copy files"
-  copy:
-    src: ~/project/.circleci/ansible/roles/deploy/files/artifact.tar.gz
-    dest: /home/ubuntu/backend
 
 - name: "Unarchive backend files"
   unarchive:
-    src: /home/ubuntu/backend/artifact.tar.gz
+    src: ~/project/.circleci/ansible/roles/deploy/files/artifact.tar.gz
     dest: ~/backend-app
 
 - name: "Executing Node app with PM2"
