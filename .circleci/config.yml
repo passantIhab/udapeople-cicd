@@ -226,22 +226,16 @@ jobs:
     steps:
       - checkout
       - install_awscli
-      - install_nodejs
-      - restore_cache:
-          keys: [backend-build-keys]
       - run:
           name: Run migrations
           command: |
             cd backend
             npm install
-            npm init
-            npm run build
-            npm run migrations > migrationOutput.txt
-            cat migrationOutput.txt
+            npm run migrations > migrations_dump.txt
       - run:
           name: Send migration results to KVDB
           command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrationOutput.txt
+            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
               curl https://kvdb.io/kRyK6ach7YGoSQVdawB2J/migration_${CIRCLE_WORKFLOW_ID:0:7} -d '1'
             fi
@@ -396,12 +390,12 @@ workflows:
               only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       - deploy-frontend:
-          requires: [configure-infrastructure]
+          requires: [run-migrations]
       - deploy-backend:
-          requires: [configure-infrastructure]
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
