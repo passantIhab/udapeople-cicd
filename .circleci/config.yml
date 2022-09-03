@@ -332,7 +332,7 @@ jobs:
             export API_URL=http://${BACKEND_PUBLIC_IP}:3030
             if curl -s $API_URL/api/status | grep "ok"
             then
-              exit 1
+              exit 0
             else
               exit 1
             fi
@@ -349,20 +349,30 @@ jobs:
       - destroy-environment
       - revert-migrations
 
-#   cloudfront-update:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Update cloudfront distribution
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure  
+  cloudfront-update:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - install_awscli
+      - install_nodjs
+      - run:
+          name: Save Old Workflow ID to kvdb.io
+          command: |
+            export OLD_WORKFLOW_ID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+            echo "Old Wokflow ID: $OLD_WORKFLOW_ID"
+            curl https://kvdb.io/${kRyK6ach7YGoSQVdawB2J}/old_workflow_id -d "${OLD_WORKFLOW_ID}"
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+              --stack-name InitialStack
+      - destroy-environment
+      - revert-migrations 
 
 # cleanup:
 #     docker:
@@ -410,9 +420,9 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
-      - smoke-test:
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
+      - cloudfront-update:
           requires: [deploy-backend, deploy-frontend]
-      # - cloudfront-update:
-      #     requires: [smoke-test]
       # - cleanup:
       #     requires: [cloudfront-update]
