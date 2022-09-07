@@ -88,19 +88,34 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-build-keys
 
+  # build-backend:
+  #   docker:
+  #     - image: cimg/node:13.8.0
+  #   steps:
+  #     - checkout
+  #     - restore_cache:
+  #         keys: [backend-build-keys]
+  #     - run:
+  #         name: Back-end build
+  #         command: |
+  #            cd backend
+  #            npm install
+  #            npm run build
+  #     - save_cache:
+  #         paths: [backend/node_modules]
+  #         key: backend-build-keys
   build-backend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
           keys: [backend-build-keys]
-      - run:
-          name: Back-end build
-          command: |
-             cd backend
-             npm install
-             npm run build
+      - run: npm i --prefix backend
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend/node_modules
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build-keys
@@ -275,44 +290,80 @@ jobs:
       - destroy-environment
       - revert-migrations
 
-  deploy-backend:
+  # deploy-backend:
+  #   docker:
+  #     - image: cimg/base:stable
+  #   steps:
+  #     - checkout
+  #     - install_awscli
+  #     - install_ansible
+  #     - install_nodejs
+  #     - add_ssh_keys:
+  #         fingerprints: ["ca:28:d5:3f:58:96:1e:81:22:1d:b5:5b:1f:1d:de:33"]
+  #     - attach_workspace:
+  #         at: ~/
+  #     - restore_cache:
+  #         keys: [backend-build-keys]
+  #     - run:
+  #         name: Install dependencies
+  #         command: |
+  #           cd backend
+  #           npm install
+  #     - run:
+  #         name: Package Backend
+  #         command: |
+  #           cd backend
+  #           npm run build
+  #           tar -czf artifact.tar.gz dist/* package*
+  #           cd ..
+  #           cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
+  #     - run:
+  #         name: Deploy backend
+  #         command: |
+  #           export TYPEORM_MIGRATIONS_DIR=./migrations
+  #           export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
+  #           export TYPEORM_MIGRATIONS=./migrations/*.ts
+  #           cd .circleci/ansible
+  #           cat inventory.txt
+  #           ansible-playbook -i inventory.txt deploy-backend.yml
+  #     - destroy-environment
+  #     - revert-migrations
+  deploy-backend-artifact:
     docker:
-      - image: cimg/base:stable
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
-      - install_awscli
-      - install_ansible
-      - install_nodejs
-      - add_ssh_keys:
-          fingerprints: ["ca:28:d5:3f:58:96:1e:81:22:1d:b5:5b:1f:1d:de:33"]
       - attach_workspace:
           at: ~/
-      - restore_cache:
-          keys: [backend-build-keys]
       - run:
           name: Install dependencies
           command: |
-            cd backend
-            npm install
+            apk add --update curl nodejs npm ansible zip
+            pip install awscli
       - run:
-          name: Package Backend
+          name: Build backend app
           command: |
-            cd backend
+            cd ~/project/backend
+            npm i
             npm run build
-            tar -czf artifact.tar.gz dist/* package*
-            cd ..
-            cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
+            cd dist
+            cp ../package.json .
+            zip -rq dist.zip *
+            mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
+            mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
+      - add_ssh_keys:
+          fingerprints: [ "ca:28:d5:3f:58:96:1e:81:22:1d:b5:5b:1f:1d:de:33" ]
       - run:
-          name: Deploy backend
+          name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
-            export TYPEORM_MIGRATIONS_DIR=./migrations
-            export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
-            export TYPEORM_MIGRATIONS=./migrations/*.ts
-            cd .circleci/ansible
-            cat inventory.txt
-            ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment
+            ls ~/project/.circleci/ansible/roles/deploy_backend/files/
+            cd ~/project/backend
+            ansible-galaxy install weareinteractive.environment
+            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/project/.circleci/ansible/inventory.txt ~/project/.circleci/ansible/deploy-backend.yml
+      - destroy-environment:
+          workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations
+#       # Here's where you will add some code to rollback on failure 
 
   smoke-test:
     docker:
