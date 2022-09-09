@@ -336,14 +336,14 @@ jobs:
             cd dist
             cp ../package.json .
             zip -rq dist.zip *
-            mkdir -p ~/project/.circleci/ansible/roles/deploy_backend/files/
-            mv dist.zip ~/project/.circleci/ansible/roles/deploy_backend/files/
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv dist.zip ~/project/.circleci/ansible/roles/deploy/files/
       - add_ssh_keys:
           fingerprints: [ "ca:28:d5:3f:58:96:1e:81:22:1d:b5:5b:1f:1d:de:33" ]
       - run:
           name: Setup EC2 instance & copy compiled backend to the EC2 instance
           command: |
-            ls ~/project/.circleci/ansible/roles/deploy_backend/files/
+            ls ~/project/.circleci/ansible/roles/deploy/files/
             cd ~/project/backend
             ansible-galaxy install weareinteractive.environment
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ~/project/.circleci/ansible/inventory.txt  ~/project/.circleci/ansible/deploy-backend.yml
