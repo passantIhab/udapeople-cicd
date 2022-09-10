@@ -1,37 +1,33 @@
 ---
-- name: 'update and upgrade packages.'
-  become: yes
-  apt:
-    upgrade: yes
-    update_cache: yes
-    cache_valid_time: 86400
+- name: "Creates backend app dir"
+  file:
+    path: ~/backend-app
+    state: directory
 
-- name: remove unneeded deps
-  become: yes
-  apt:
-    autoremove: yes
 
-- name: "Installing Node Dependencies"
+- name: "Unarchive backend files"
+  unarchive:
+    src: ~/project/.circleci/ansible/roles/deploy/files/artifact.tar.gz
+    dest: ~/backend-app
+
+- name: "Install dep"
   shell: |
     cd ~/backend-app
     npm i
 
-- name: install pm2
-  become: yes
-  npm:
-    name: pm2
-    global: yes
-    state: latest
-    production: yes
-
-- name: extract artifact
-  become: yes
-  unarchive:
-    src: files/artifact.tar.gz
-    dest: .
-
-- name: start app
-  become: yes
+- name: "Executing Node app with PM2"
   shell: |
-    pm2 delete all
-    pm2 start npm -- start
+    cd ~/backend-app/dist
+    pm2 stop defaults
+    pm2 start main.js
+  register: execute_node
+
+- name: print message
+  debug:
+    msg: "{{ execute_node.stdout_lines }}"
+
+- name: "Configure pm2 to start as service"
+  become: true
+  shell: |
+   sudo su -c "env PATH=$PATH:/usr/local/bin pm2 startup systemd -u ubuntu --hp /home/ubuntu>"
+   pm2 save

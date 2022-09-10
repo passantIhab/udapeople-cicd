@@ -305,11 +305,6 @@ jobs:
       - restore_cache:
           keys: [backend-build-keys]
       - run:
-          name: Install dependencies
-          command: |
-            cd backend
-            npm install
-      - run:
           name: Package & deploy Backend
           command: |
             cd backend
