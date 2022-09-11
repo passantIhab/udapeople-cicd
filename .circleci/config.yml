@@ -210,16 +210,16 @@ jobs:
       - run:
           name: Configure server
           command: |
-            echo ENVIRONMENT=production >> ~/.profile
-            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ~/.profile
-            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> ~/.profile
-            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ~/.profile
-            echo TYPEORM_HOST=$TYPEORM_HOST >> ~/.profile
-            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ~/.profile
-            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ~/.profile
-            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ~/.profile
-            echo TYPEORM_PORT=$TYPEORM_PORT >> ~/.profile
-            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> ~/.profile
+            export ENVIRONMENT=production >> ~/.profile
+            export TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ~/.profile
+            export TYPEORM_DATABASE=$TYPEORM_DATABASE >> ~/.profile
+            export TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ~/.profile
+            export TYPEORM_HOST=$TYPEORM_HOST >> ~/.profile
+            export TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ~/.profile
+            export TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ~/.profile
+            export TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ~/.profile
+            export TYPEORM_PORT=$TYPEORM_PORT >> ~/.profile
+            export TYPEORM_USERNAME=$TYPEORM_USERNAME >> ~/.profile
             cat ~/.profile
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
@@ -235,6 +235,10 @@ jobs:
     steps:
       - checkout
       - install_awscli
+      - restore_cache:
+          keys: [backend-build-keys]
+      - attach_workspace:
+          at: ~/
       - run:
           name: Run migrations
           command: |           
