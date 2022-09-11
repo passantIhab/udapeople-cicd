@@ -17,8 +17,18 @@
 
 - name: "Executing Node app with PM2"
   shell: |
+    export ENVIRONMENT=production 
+    export TYPEORM_CONNECTION=postgres
+    export TYPEORM_DATABASE=glee
+    export TYPEORM_ENTITIES=./backend-app/dist/modules/domain/**/*.entity{.ts,.js}
+    export TYPEORM_HOST=udapeople-db.c49cbxqielm7.us-east-1.rds.amazonaws.com
+    export TYPEORM_MIGRATIONS=./backend-app/dist/migrations/*.ts
+    export TYPEORM_MIGRATIONS_DIR=./backend/dist/migrations
+    export TYPEORM_PASSWORD=OVoURELOf5D2NkmOYGn3
+    export TYPEORM_PORT=5432
+    export TYPEORM_USERNAME=postgres
     cd ~/backend-app/dist
-    pm2 stop defaults
+    pm2 stop default
     pm2 start main.js
   register: execute_node
 
