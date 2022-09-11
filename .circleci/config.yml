@@ -210,17 +210,17 @@ jobs:
       - run:
           name: Configure server
           command: |
-            export ENVIRONMENT=production >> ~/.profile
-            export TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> ~/.profile
-            export TYPEORM_DATABASE=$TYPEORM_DATABASE >> ~/.profile
-            export TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> ~/.profile
-            export TYPEORM_HOST=$TYPEORM_HOST >> ~/.profile
-            export TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> ~/.profile
-            export TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> ~/.profile
-            export TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> ~/.profile
-            export TYPEORM_PORT=$TYPEORM_PORT >> ~/.profile
-            export TYPEORM_USERNAME=$TYPEORM_USERNAME >> ~/.profile
-            cat ~/.profile
+            echo ENVIRONMENT=production > backend/.env
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+            cat backend/.env
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
       - persist_to_workspace:
@@ -235,14 +235,10 @@ jobs:
     steps:
       - checkout
       - install_awscli
-      - restore_cache:
-          keys: [backend-build-keys]
-      - attach_workspace:
-          at: ~/
       - run:
           name: Run migrations
-          command: |           
-            cd backend          
+          command: |
+            cd backend
             npm install
             npm run migrations > migrations.txt
       - run:
