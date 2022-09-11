@@ -237,21 +237,20 @@ jobs:
       - install_awscli
       - run:
           name: Run migrations
-          command: |
-            cd backend
-            export ENVIRONMENT=production
-            export TYPEORM_CONNECTION=$TYPEORM_CONNECTION
-            export TYPEORM_DATABASE=$TYPEORM_DATABASE
-            export TYPEORM_ENTITIES=$TYPEORM_ENTITIES
-            export TYPEORM_HOST=$TYPEORM_HOST
-            export TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS
-            export TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR
-            export TYPEORM_PASSWORD=$TYPEORM_PASSWORD
-            export TYPEORM_PORT=$TYPEORM_PORT
-            export TYPEORM_USERNAME=$TYPEORM_USERNAME
+          command: |           
+            export ENVIRONMENT=production >> ~/.profile
+            export TYPEORM_CONNECTION=postgres >> ~/.profile
+            export TYPEORM_DATABASE=glee >> ~/.profile
+            export TYPEORM_ENTITIES=./backend/dist/modules/domain/**/*.entity{.ts,.js} >> ~/.profile
+            export TYPEORM_HOST=udapeople-db.c49cbxqielm7.us-east-1.rds.amazonaws.com >> ~/.profile
+            export TYPEORM_MIGRATIONS=./backend/dist/migrations/*.ts >> ~/.profile
+            export TYPEORM_MIGRATIONS_DIR=./backend/dist/migrations >> ~/.profile
+            export TYPEORM_PASSWORD=OVoURELOf5D2NkmOYGn3 >> ~/.profile
+            export TYPEORM_PORT=5432 >> ~/.profile
+            export TYPEORM_USERNAME=postgres >> ~/.profile
+            cd backend          
             npm install
             npm run migrations > migrations.txt
-            echo $TYPEORM_ENTITIES
       - run:
           name: Send migration results to KVDB
           command: |
